@@ -45,7 +45,7 @@ Introduction
 
 Modern audio and video conferencing systems include RTP middleboxes that can often "switch" video and audio streams without mixing them.   When receivers have homogenous coding capabilities and can receive multiple streams each, such Media Switching mixers avoid the need to decode and re-encode media for the purpose of compositing video or mixing audio [RTP-TOP].  Instead they can forward encoded media as it was sent by the transmitter.  
 
-Such Media Switching mixers may selectively forward only certain transmitted stream(s) at any given time, such as the video and audio stream from the currently active speaker. When a Media Switching Mixer provides the receiver with only the latest speaker(s), it selects the source from the different transmitter’s RTP sessions and must rewrite the RTP header when forwarding them into the receiver’s session [RTP-TOP].  Thus, Media Switching mixers have had to be trusted to decrypt and re-encrypt all of the present SRTP context to perform these header rewrites.
+Such Media Switching mixers may selectively forward only certain transmitted stream(s) at any given time, such as the video and audio stream from the currently active speaker. When a Media Switching Mixer provides the receiver with only the latest speaker(s), it selects the source from the different transmitter’s RTP sessions and must rewrite the RTP header before forwarding them into the receiver’s session [RTP-TOP].  Thus, Media Switching mixers using current SRTP standard have had to be trusted to decrypt and re-encrypt all of the present SRTP streams to perform these header rewrites and maintain SRTP context synchronization between transmitters and receivers.
 
 Modern audio and video conferencing systems have decomposed media switching mixer devices into a) a controller that deals with the signaling and keeps track of who is in the conference and b) one or more Media Switches that receive, rewrite headers and transmit streams to receivers.  In scalable systems, media switches may be deployed in many distributed locations to optimize bandwidth or latency and may be rented on demand from third-parties to meet peak loading needs. Therefore, there is a need to locate Media Switches in data centers and/or be operated by third-parties not otherwise trusted with decryption or encryption of audio and video media.  
 
@@ -173,13 +173,13 @@ The following are the security solution requirements for media switches that ena
 
 4.  The media switching infrastructure must be capable, if authorized, of changing any part of an RTP header except for the RTP sequence number and SSRC. This in turn mandates that the switching infrastructure must have access to the keys used for the authentication of RTP header fields other than SSRC and RTP sequence number when a proper authorization is in place. 
 
-5.  The above two requirements mandate a split key and split authentication model for SRTP. Instead of the current single SRTP master key, this document requires two independent SRTP master keys. The first is an end to end key that is used for the encryption of the RTP payload and other information requiring end to end encryption. The end to end key is also used for the authentication of the RTP payload, the RTP sequence number and SSRC as well as any other information requiring end to end authentication . The second key is hop by hop key used for the authentication of RTP header fields that might be modified by the switch as well as any other information requiring hop by hop authentication (e.g. RTCP packet authentication). The hop by hop key can also be used for encryption of information that the switch is authorized to access and modify such as encrypted RTCP packets. {include a split key-authentication model utilization diagram)
+5.  The above two requirements mandate a split key and split authentication model for SRTP. Instead of the current single SRTP master key, this document requires two independent SRTP master keys. The first is an end to end key that is used for the encryption of the RTP payload and other information requiring end to end encryption. The end to end key is also used for the authentication of the RTP payload, the RTP sequence number, RoC and SSRC as well as any other information requiring end to end authentication . The second key is hop by hop key used for the authentication of RTP payload and RTP header fields as well as any other information requiring hop by hop authentication (e.g. RTCP packet authentication). The hop by hop key can also be used for encryption of information that the switch is authorized to access and modify such as encrypted RTCP packets. {include a split key-authentication model utilization diagram)
 
 ~~~~~~~~~~
 RTP Packet 
 -----------------------   ^
 | CC M | PT | Seq Num |   |  
-|     Time Stamp      |   |  Auth( RTP Packet + RoC ) 
+|     Time Stamp      |   |  Auth( RTP Packet + RoC, HobByHopKey ) 
 |        SSRC         |   |
 |        CSRCs        |   |
 -----------------------   |   ^
@@ -195,7 +195,7 @@ RTP Packet
 
 7. The switching infrastructure must not be involved in the distribution of the SRTP master keys to participants nor in the authentication of the participants identities for the purpose of key distribution
 
-8. The media switching infrastructure must be able to switch an already active SRTP stream to a new receiver while guaranteeing the timely synchronization between the SRTP transmitter and its old and new receivers. Of special interest is the RoC part pf the SRTP context due to its dynamic nature. It is important to note that the media switching infrastructure can not change RTP sequence numbers as that would require packet re-encryption.  (include diagram showing the synchronization requirement)
+8. The media switching infrastructure must be able to switch an already active SRTP stream to a new receiver while guaranteeing the timely synchronization between the SRTP transmitter's context and its old and new receivers. Of special interest is the RoC part pf the SRTP context due to its dynamic nature. It is important to note that the media switching infrastructure can not change RTP sequence numbers as that would require packet re-encryption.  (include diagram showing the synchronization requirement)
 
 
 ~~~~~~~~~~
